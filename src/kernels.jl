@@ -63,6 +63,14 @@ function pairwise_forces_loop_gpu!(buffers, sys::System{D, AT, T},
     return buffers
 end
 
+# Convenience overload for non-neighborlist case without virial flag.
+# Allows CUDA extension to provide a specialized kernel while generic backends
+# fallback to the KA kernel with Virial disabled.
+function pairwise_forces_loop_gpu!(buffers, sys::System{D, AT, T},
+                    pairwise_inters, neighbors::NoNeighborList, step_n) where {D, AT <: AbstractGPUArray, T}
+    return pairwise_forces_loop_gpu!(buffers, sys, pairwise_inters, neighbors, Val(false), step_n)
+end
+
 @kernel inbounds=true function pairwise_force_kernel_nl!(forces, virial, @Const(coords),
                                            @Const(velocities), @Const(atoms),
                                            boundary, inters,
